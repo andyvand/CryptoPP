@@ -1,7 +1,7 @@
 include ksamd64.inc
-EXTERNDEF ?Te@rdtable@CryptoPP@@3PA_KA:FAR
-EXTERNDEF ?g_cacheLineSize@CryptoPP@@3IA:FAR
-EXTERNDEF ?SHA256_K@CryptoPP@@3QBIB:FAR
+EXTERNDEF ?Te@rdtable@CryptoPP@@3PA_KA:FAR ; unsigned __int64 * CryptoPP::rdtable::Te
+EXTERNDEF ?g_cacheLineSize@CryptoPP@@3IA:FAR ; unsigned int CryptoPP::g_cacheLineSize
+EXTERNDEF ?SHA256_K@CryptoPP@@3QBIB:FAR ; unsigned int const * const CryptoPP::SHA256_K
 .CODE
 
     ALIGN   8

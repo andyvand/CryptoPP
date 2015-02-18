@@ -7,15 +7,37 @@ CXXFLAGS = -DNDEBUG -g -O2
 # LDFLAGS += -Wl,--gc-sections
 ARFLAGS = -cr	# ar needs the dash on OpenBSD
 RANLIB = ranlib
-CP = cp
+CP = cp -Rf
 MKDIR = mkdir
 EGREP = egrep
-UNAME = $(shell uname)
-ISX86 = $(shell uname -m | $(EGREP) -c "i.86|x86|i86|amd64")
-IS_SUN_CC = $(shell $(CXX) -V 2>&1 | $(EGREP) -c "CC: Sun")
-IS_LINUX = $(shell $(CXX) -dumpmachine 2>&1 | $(EGREP) -c "linux")
-IS_MINGW = $(shell $(CXX) -dumpmachine 2>&1 | $(EGREP) -c "mingw")
-CLANG_COMPILER = $(shell $(CXX) --version 2>&1 | $(EGREP) -i -c "clang version")
+
+ifeq ($(UNAME), )
+UNAME = `uname -m`
+endif
+
+ifeq ($UNAME, Darwin)
+CC = clang
+CXX = clang
+AR=ar
+ARFLAGS=cru
+RANLIB=ranlib
+LDLIBS=-framework CoreFoundation -lSystem -lstdc++ 
+ifeq ($CONFIG, SMALL)
+CXXFLAGS = -g0 -arch i386 -arch x86_64 -Oz -march=nocona -mtune=nocona -mavx -maes
+CFLAGS = -g0 -arch i386 -arch x86_64 -Oz -march=nocona -mtune=nocona -mavx -maes
+LDFLAGS = -g0 -arch i386 -arch x86_64 -march=nocona -mtune=nocona -mavx -maes
+else
+CXXFLAGS = -g0 -arch i386 -arch x86_64 -Ofast -march=nocona -mtune=nocona -mavx -maes
+CFLAGS = -g0 -arch i386 -arch x86_64 -Ofast -march=nocona -mtune=nocona -mavx -maes
+LDFLAGS = -g0 -arch i386 -arch x86_64 -march=nocona -mtune=nocona -mavx -maes
+endif
+endif
+
+ISX86 = `uname -m | $(EGREP) -c "i.86|x86|i86|amd64"`
+IS_SUN_CC = `$(CXX) -V 2>&1 | $(EGREP) -c "CC: Sun"`
+IS_LINUX = `$(CXX) -dumpmachine 2>&1 | $(EGREP) -c "linux"`
+IS_MINGW = `$(CXX) -dumpmachine 2>&1 | $(EGREP) -c "mingw"`
+CLANG_COMPILER = `$(CXX) --version 2>&1 | $(EGREP) -i -c "clang version"`
 
 # Default prefix for make install
 ifeq ($(PREFIX),)
@@ -27,7 +49,6 @@ CXX = g++
 endif
 
 ifeq ($(ISX86),1)
-
 GCC42_OR_LATER = $(shell $(CXX) -v 2>&1 | $(EGREP) -c "^gcc version (4.[2-9]|[5-9])")
 INTEL_COMPILER = $(shell $(CXX) --version 2>&1 | $(EGREP) -c "\(ICC\)")
 ICC111_OR_LATER = $(shell $(CXX) --version 2>&1 | $(EGREP) -c "\(ICC\) ([2-9][0-9]|1[2-9]|11\.[1-9])")
@@ -37,12 +58,13 @@ GAS219_OR_LATER = $(shell $(CXX) -xc -c /dev/null -Wa,-v -o/dev/null 2>&1 | $(EG
 
 ifneq ($(GCC42_OR_LATER),0)
 ifeq ($(UNAME),Darwin)
-CXXFLAGS += -arch x86_64 -arch i386
+CXXFLAGS += -g0 -arch x86_64 -arch i386 -Ofast -march=nocona -mtune=nocona -mavx
 else
 CXXFLAGS += -march=native
 endif
 endif
 
+ifneq ($(TESTCASE), 1)
 ifneq ($(INTEL_COMPILER),0)
 CXXFLAGS += -wd68 -wd186 -wd279 -wd327
 ifeq ($(ICC111_OR_LATER),0)
@@ -64,6 +86,7 @@ endif
 endif
 ifeq ($(UNAME),SunOS)
 CXXFLAGS += -Wa,--divide	# allow use of "/" operator
+endif
 endif
 endif
 
@@ -89,12 +112,14 @@ endif
 ifeq ($(UNAME),Darwin)
 AR = libtool
 ARFLAGS = -static -o
+ifneq ($TESTCASE, 1)
 CXX = c++
 IS_GCC2 = $(shell $(CXX) -v 2>&1 | $(EGREP) -c gcc-932)
 ifeq ($(IS_GCC2),1)
 CXXFLAGS += -fno-coalesce-templates -fno-coalesce-static-vtables
 LDLIBS += -lstdc++
 LDFLAGS += -flat_namespace -undefined suppress -m
+endif
 endif
 endif
 

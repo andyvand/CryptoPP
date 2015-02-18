@@ -281,8 +281,11 @@ bool TestOS_RNG()
 
 		ArraySink *sink;
 		RandomNumberSource test(*rng, UINT_MAX, false, new Deflator(sink=new ArraySink(NULL,0)));
-		unsigned long total=0, length=0;
+        unsigned long total=0;
 		time_t t = time(NULL), t1 = 0;
+#if 0
+        unsigned long length=0;
+#endif
 
 		// check that it doesn't take too long to generate a reasonable amount of randomness
 		while (total < 16 && (t1 < 10 || total*8 > (unsigned long)t1))

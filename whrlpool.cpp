@@ -68,6 +68,11 @@
 #include "misc.h"
 #include "cpu.h"
 
+/* Fixme ... temporary clang fix */
+#ifdef __clang__
+#undef CRYPTOPP_BOOL_SSE2_ASM_AVAILABLE
+#endif
+
 NAMESPACE_BEGIN(CryptoPP)
 
 void Whirlpool_TestInstantiations()
@@ -401,7 +406,7 @@ void Whirlpool::Transform(word64 *digest, const word64 *block)
 	#endif
 	__asm__ __volatile__
 	(
-		".intel_syntax noprefix;"
+		".intel_syntax;"
 		AS_PUSH_IF86(	bx)
 		AS2(	mov		AS_REG_6, WORD_REG(ax))
 #else
@@ -569,7 +574,7 @@ void Whirlpool::Transform(word64 *digest, const word64 *block)
 		AS_POP_IF86(	bx)
 #endif
 #ifdef __GNUC__
-		".att_syntax prefix;"
+		".att_syntax;"
 			:
 			: "a" (Whirlpool_C), "c" (digest), "d" (block)
 	#if CRYPTOPP_BOOL_X64

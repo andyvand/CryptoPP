@@ -572,7 +572,11 @@ size_t GCM_Base::AuthenticateBlocks(const byte *data, size_t len)
 		#ifdef __GNUC__
 			__asm__ __volatile__
 			(
-			".intel_syntax noprefix;"
+            #if !defined(__APPLE__)
+             ".intel_syntax noprefix;"
+            #else
+             ".intel_syntax;\n"
+            #endif
 		#elif defined(CRYPTOPP_GENERATE_X64_MASM)
 			ALIGN   8
 			GCM_AuthenticateBlocks_2K	PROC FRAME
@@ -608,7 +612,11 @@ size_t GCM_Base::AuthenticateBlocks(const byte *data, size_t len)
 		AS2(	movdqu	xmm4, [WORD_REG(cx)]			)
 		AS2(	pxor	xmm0, xmm4						)
 
+#if defined(__x86_64__) && defined(__APPLE__)
+        AS2(	movq	rbx, xmm0						)
+#else
 		AS2(	movd	ebx, xmm0						)
+#endif
 		AS2(	mov		eax, AS_HEX(f0f0f0f0)			)
 		AS2(	and		eax, ebx						)
 		AS2(	shl		ebx, 4							)
@@ -623,9 +631,25 @@ size_t GCM_Base::AuthenticateBlocks(const byte *data, size_t len)
 		AS2(	movzx	edi, al					)
 		AS2(	movdqa	xmm2, XMMWORD_PTR [MUL_TABLE_1 + WORD_REG(di)]	)
 
+#if defined(__x86_64__) && defined(__APPLE__)
+#define ARCHMACRO AS2(	movq	rax, xmm0										)
+#define ARCHMACRO2 AS2(	movq	rbx, xmm0										)
+#define ARCHMACRO3 AS2(	movq	WORD_REG(di), xmm0					)
+#define ARCHMACRO4 AS2(	movq	WORD_REG(di), xmm1					)
+#define ARCHRETURN AS2(	movq	xmm0, rax						)
+#define ARCHMOVEIN AS2(	movq	rax, xmm0						)
+#else
+#define ARCHMACRO AS2(	movd	eax, xmm0										)
+#define ARCHMACRO2 AS2(	movd	ebx, xmm0										)
+#define ARCHMACRO3 AS2(	movd	WORD_REG(di), xmm0					)
+#define ARCHMACRO4 AS2(	movd	WORD_REG(di), xmm1					)
+#define ARCHRETURN AS2(	movd	xmm0, eax						)
+#define ARCHMOVEIN AS2(	movd	eax, xmm0						)
+#endif
+
 		#define SSE2_MUL_32BITS(i)											\
 			AS2(	psrldq	xmm0, 4											)\
-			AS2(	movd	eax, xmm0										)\
+            ARCHMACRO \
 			AS2(	and		eax, AS_HEX(f0f0f0f0)									)\
 			AS2(	movzx	edi, bh											)\
 			AS2(	pxor	xmm5, XMMWORD_PTR [MUL_TABLE_0 + (i-1)*256 + WORD_REG(di)]	)\
@@ -636,8 +660,8 @@ size_t GCM_Base::AuthenticateBlocks(const byte *data, size_t len)
 			AS2(	pxor	xmm3, XMMWORD_PTR [MUL_TABLE_0 + (i-1)*256 + WORD_REG(di)]	)\
 			AS2(	movzx	edi, bl											)\
 			AS2(	pxor	xmm2, XMMWORD_PTR [MUL_TABLE_0 + (i-1)*256 + WORD_REG(di)]	)\
-			AS2(	movd	ebx, xmm0										)\
-			AS2(	shl		ebx, 4											)\
+            ARCHMACRO2 \
+            AS2(	shl		ebx, 4											)\
 			AS2(	and		ebx, AS_HEX(f0f0f0f0)									)\
 			AS2(	movzx	edi, ah											)\
 			AS2(	pxor	xmm5, XMMWORD_PTR [MUL_TABLE_1 + i*256 + WORD_REG(di)]		)\
@@ -671,8 +695,8 @@ size_t GCM_Base::AuthenticateBlocks(const byte *data, size_t len)
 		AS2(	pxor	xmm5, xmm2						)
 
 		AS2(	psrldq	xmm0, 15						)
-		AS2(	movd	WORD_REG(di), xmm0					)
-		AS2(	movzx	eax, WORD PTR [RED_TABLE + WORD_REG(di)*2]	)
+        ARCHMACRO3
+        AS2(	movzx	eax, WORD PTR [RED_TABLE + WORD_REG(di)*2]	)
 		AS2(	shl		eax, 8							)
 
 		AS2(	movdqa	xmm0, xmm5						)
@@ -680,16 +704,19 @@ size_t GCM_Base::AuthenticateBlocks(const byte *data, size_t len)
 		AS2(	pxor	xmm4, xmm5						)
 
 		AS2(	psrldq	xmm1, 15						)
-		AS2(	movd	WORD_REG(di), xmm1					)
+        ARCHMACRO4
 		AS2(	xor		ax, WORD PTR [RED_TABLE + WORD_REG(di)*2]	)
 		AS2(	shl		eax, 8							)
 
 		AS2(	psrldq	xmm0, 15						)
+#if defined(__x86_64__) && defined(__APPLE__)
+        AS2(	movq	WORD_REG(di), xmm0					)
+#else
 		AS2(	movd	WORD_REG(di), xmm0					)
+#endif
 		AS2(	xor		ax, WORD PTR [RED_TABLE + WORD_REG(di)*2]	)
-
-		AS2(	movd	xmm0, eax						)
-		AS2(	pxor	xmm0, xmm4						)
+        ARCHRETURN
+        AS2(	pxor	xmm0, xmm4						)
 
 		AS2(	add		WORD_REG(cx), 16					)
 		AS2(	sub		WORD_REG(dx), 1						)
@@ -700,8 +727,12 @@ size_t GCM_Base::AuthenticateBlocks(const byte *data, size_t len)
 		AS_POP_IF86(	bx)
 
 		#ifdef __GNUC__
-				".att_syntax prefix;"
-					: 
+            #if !defined(__APPLE__)
+             ".att_syntax prefix;"
+            #else
+             ".att_syntax;\n"
+            #endif
+					:
 					: "c" (data), "d" (len/16), "S" (hashBuffer), "D" (s_reductionTable)
 					: "memory", "cc", "%eax"
 			#if CRYPTOPP_BOOL_X64
@@ -723,7 +754,11 @@ size_t GCM_Base::AuthenticateBlocks(const byte *data, size_t len)
 		#ifdef __GNUC__
 			__asm__ __volatile__
 			(
-			".intel_syntax noprefix;"
+            #if !defined(__APPLE__)
+             ".intel_syntax noprefix;"
+            #else
+             ".intel_syntax;\n"
+            #endif
 		#elif defined(CRYPTOPP_GENERATE_X64_MASM)
 			ALIGN   8
 			GCM_AuthenticateBlocks_64K	PROC FRAME
@@ -750,8 +785,8 @@ size_t GCM_Base::AuthenticateBlocks(const byte *data, size_t len)
 
 		#undef SSE2_MUL_32BITS
 		#define SSE2_MUL_32BITS(i)								\
-			AS2(	movd	eax, xmm1							)\
-			AS2(	psrldq	xmm1, 4								)\
+            ARCHMOVEIN \
+            AS2(	psrldq	xmm1, 4								)\
 			AS2(	movzx	edi, al						)\
 			AS2(	add		WORD_REG(di), WORD_REG(di)					)\
 			AS2(	pxor	xmm0, [MUL_TABLE(i,0) + WORD_REG(di)*8]	)\
@@ -777,8 +812,12 @@ size_t GCM_Base::AuthenticateBlocks(const byte *data, size_t len)
 		AS2(	movdqa	[WORD_REG(si)], xmm0				)
 
 		#ifdef __GNUC__
-				".att_syntax prefix;"
-					: 
+            #if !defined(__APPLE__)
+             ".att_syntax prefix;"
+            #else
+             ".att_syntax;\n"
+            #endif
+					:
 					: "c" (data), "d" (len/16), "S" (hashBuffer)
 					: "memory", "cc", "%edi", "%eax"
 				);

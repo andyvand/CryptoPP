@@ -287,7 +287,11 @@ void CRYPTOPP_NOINLINE Panama_SSE2_Pull(size_t count, word32 *state, word32 *z, 
 
 #ifdef CRYPTOPP_GNU_STYLE_INLINE_ASSEMBLY
 		AS_POP_IF86(	bx)
+#ifndef __clang__
 		".att_syntax prefix;"
+#else
+        ".att_syntax"
+#endif
 			:
 	#if CRYPTOPP_BOOL_X64
 			: "D" (count), "S" (state), "d" (z), "c" (y)

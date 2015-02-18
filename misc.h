@@ -545,7 +545,7 @@ inline void SecureWipeArray(T *buf, size_t n)
 }
 
 // this function uses wcstombs(), which assumes that setlocale() has been called
-static std::string StringNarrow(const wchar_t *str, bool throwOnError = true)
+inline std::string StringNarrow(const wchar_t *str, bool throwOnError = true)
 {
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -833,6 +833,8 @@ inline word32 ByteReverse(word32 value)
 #if defined(__GNUC__) && defined(CRYPTOPP_X86_ASM_AVAILABLE)
 	__asm__ ("bswap %0" : "=r" (value) : "0" (value));
 	return value;
+#elif defined(APPLE)
+    return OSSwapInt32(value);
 #elif defined(CRYPTOPP_BYTESWAP_AVAILABLE)
 	return bswap_32(value);
 #elif defined(__MWERKS__) && TARGET_CPU_PPC

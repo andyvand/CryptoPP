@@ -9,6 +9,11 @@
 			<key>orderHint</key>
 			<integer>2</integer>
 		</dict>
+		<key>CryptoPP Dynamic.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>3</integer>
+		</dict>
 		<key>CryptoPP.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
@@ -23,6 +28,16 @@
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
 		<key>A95E0A401A94D72F00B82691</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>A9AB593B1A95027000D74495</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>A9AB594A1A95029200D74495</key>
 		<dict>
 			<key>primary</key>
 			<true/>

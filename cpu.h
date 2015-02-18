@@ -2,14 +2,11 @@
 #define CRYPTOPP_CPU_H
 
 #ifdef CRYPTOPP_GENERATE_X64_MASM
-
 #define CRYPTOPP_X86_ASM_AVAILABLE
 #define CRYPTOPP_BOOL_X64 1
 #define CRYPTOPP_BOOL_SSE2_ASM_AVAILABLE 1
 #define NAMESPACE_END
-
 #else
-
 #include "config.h"
 
 #if CRYPTOPP_BOOL_SSE2_INTRINSICS_AVAILABLE
@@ -17,7 +14,7 @@
 #endif
 
 #if CRYPTOPP_BOOL_AESNI_INTRINSICS_AVAILABLE
-#if !defined(__GNUC__) || defined(__SSSE3__) || defined(__INTEL_COMPILER)
+#if !defined(__GNUC__) || defined(__SSSE3__) || defined(__INTEL_COMPILER) || defined(__clang__)
 #include <tmmintrin.h>
 #else
 __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -27,7 +24,7 @@ _mm_shuffle_epi8 (__m128i a, __m128i b)
   	return a;
 }
 #endif
-#if !defined(__GNUC__) || defined(__SSE4_1__) || defined(__INTEL_COMPILER)
+#if !defined(__GNUC__) || defined(__SSE4_1__) || defined(__INTEL_COMPILER) || defined(__clang__)
 #include <smmintrin.h>
 #else
 __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -44,8 +41,21 @@ _mm_insert_epi32 (__m128i a, int b, const int i)
   	return a;
 }
 #endif
-#if !defined(__GNUC__) || (defined(__AES__) && defined(__PCLMUL__)) || defined(__INTEL_COMPILER)
+#if !defined(__GNUC__) || (defined(__AES__) && defined(__PCLMUL__)) || defined(__INTEL_COMPILER) || defined(__clang__)
 #include <wmmintrin.h>
+
+#if defined(__clang__)
+#define _mm_clmulepi64_si128(a, b, c) \
+    ({ \
+        __m128i _a = (a); \
+        __m128i _b = (b); \
+        \
+        __asm__("pclmulqdq %3, %2, %0": "=x" (_a): "0" (_a), "xm" (_b),	\
+        "i" (c)); \
+        \
+        _a; \
+    })
+#endif
 #else
 __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_clmulepi64_si128 (__m128i a, __m128i b, const int i)
@@ -78,7 +88,7 @@ _mm_aesenclast_si128 (__m128i a, __m128i b)
 {
 	asm ("aesenclast %1, %0" : "+x"(a) : "xm"(b));
   	return a;
-}
+}07
 __inline __m128i __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_aesdec_si128 (__m128i a, __m128i b)
 {
@@ -97,9 +107,7 @@ _mm_aesdeclast_si128 (__m128i a, __m128i b)
 NAMESPACE_BEGIN(CryptoPP)
 
 #if CRYPTOPP_BOOL_X86 || CRYPTOPP_BOOL_X64
-
 #define CRYPTOPP_CPUID_AVAILABLE
-
 // these should not be used directly
 extern CRYPTOPP_DLL bool g_x86DetectionDone;
 extern CRYPTOPP_DLL bool g_hasSSSE3;
@@ -115,7 +123,6 @@ inline bool HasSSE2()	{return true;}
 inline bool HasISSE()	{return true;}
 inline bool HasMMX()	{return true;}
 #else
-
 extern CRYPTOPP_DLL bool g_hasSSE2;
 extern CRYPTOPP_DLL bool g_hasISSE;
 extern CRYPTOPP_DLL bool g_hasMMX;
@@ -212,18 +219,28 @@ inline int GetCacheLineSize()
 #else
 	#define CRYPTOPP_GNU_STYLE_INLINE_ASSEMBLY
 	// define these in two steps to allow arguments to be expanded
-	#define GNU_AS1(x) #x ";"
-	#define GNU_AS2(x, y) #x ", " #y ";"
-	#define GNU_AS3(x, y, z) #x ", " #y ", " #z ";"
+#if defined(__APPLE__)
+    #define GNU_AS1(x) #x ";\n"
+    #define GNU_AS2(x, y) #x ", " #y ";\n"
+    #define GNU_AS3(x, y, z) #x ", " #y ", " #z ";\n"
+    #define GNU_ASL(x) "\n" #x ":\n"
+    #define GNU_ASJ(x, y, z) #x " " #y #z ";\n"
+    #define ASS(x, y, a, b, c, d) #x ", " #y ", " #a "*64+" #b "*16+" #c "*4+" #d ";\n"
+    #define ASC(x, y) #x " " #y ";\n"
+#else
+    #define GNU_AS1(x) #x ";"
+    #define GNU_AS2(x, y) #x ", " #y ";"
+    #define GNU_AS3(x, y, z) #x ", " #y ", " #z ";"
 	#define GNU_ASL(x) "\n" #x ":"
-	#define GNU_ASJ(x, y, z) #x " " #y #z ";"
+    #define GNU_ASJ(x, y, z) #x " " #y #z ";"
+    #define ASS(x, y, a, b, c, d) #x ", " #y ", " #a "*64+" #b "*16+" #c "*4+" #d ";"
+    #define ASC(x, y) #x " " #y ";"
+#endif
 	#define AS1(x) GNU_AS1(x)
 	#define AS2(x, y) GNU_AS2(x, y)
 	#define AS3(x, y, z) GNU_AS3(x, y, z)
-	#define ASS(x, y, a, b, c, d) #x ", " #y ", " #a "*64+" #b "*16+" #c "*4+" #d ";"
 	#define ASL(x) GNU_ASL(x)
 	#define ASJ(x, y, z) GNU_ASJ(x, y, z)
-	#define ASC(x, y) #x " " #y ";"
 	#define CRYPTOPP_NAKED
 	#define AS_HEX(y) 0x##y
 #endif
@@ -297,8 +314,8 @@ inline int GetCacheLineSize()
 	#define WORD_SZ 8
 	#define WORD_REG(x)	r##x
 	#define WORD_PTR QWORD PTR
-	#define AS_PUSH_IF86(x)
-	#define AS_POP_IF86(x)
+	#define AS_PUSH_IF86(x) AS1(push r##x)
+	#define AS_POP_IF86(x) AS1(pop r##x)
 	#define AS_JCXZ jrcxz
 #endif
 

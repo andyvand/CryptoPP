@@ -362,7 +362,7 @@ inline bool operator!=(const ::CryptoPP::OID &lhs, const ::CryptoPP::OID &rhs)
 inline bool operator<(const ::CryptoPP::OID &lhs, const ::CryptoPP::OID &rhs)
 	{return std::lexicographical_compare(lhs.m_values.begin(), lhs.m_values.end(), rhs.m_values.begin(), rhs.m_values.end());}
 inline ::CryptoPP::OID operator+(const ::CryptoPP::OID &lhs, unsigned long rhs)
-	{return ::CryptoPP::OID(lhs)+=rhs;}
+	{return ::CryptoPP::OID(lhs)+=(word32)rhs;}
 
 NAMESPACE_END
 

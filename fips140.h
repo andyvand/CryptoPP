@@ -52,7 +52,7 @@ void EncryptionPairwiseConsistencyTest(const PK_Encryptor &encryptor, const PK_D
 void SignaturePairwiseConsistencyTest_FIPS_140_Only(const PK_Signer &signer, const PK_Verifier &verifier);
 void EncryptionPairwiseConsistencyTest_FIPS_140_Only(const PK_Encryptor &encryptor, const PK_Decryptor &decryptor);
 
-#define CRYPTOPP_DUMMY_DLL_MAC "MAC_51f34b8db820ae8"
+#define CRYPTOPP_DUMMY_DLL_MAC { 'M', 'A', 'C', '_', '5', '1', 'f', '3', '4', 'b', '8', 'd', 'b', '8', '2', '0', 'a', 'e', '8' }
 
 NAMESPACE_END
 

@@ -28,11 +28,9 @@
 	<dict>
 		<key>57ff6487-cd31-0410-9ec3-f628ee90f5f0++505</key>
 		<string>svn://svn.code.sf.net/p/cryptopp/code</string>
-		<key>57ff6487-cd31-0410-9ec3-f628ee90f5f0++8259</key>
-		<string>svn://svn.code.sf.net/p/cryptopp/code</string>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
-	<string>svn://svn.code.sf.net/p/cryptopp/code/trunk/c5/CryptoPP/CryptoPP.xcodeproj</string>
+	<string>svn://svn.code.sf.net/p/cryptopp/code</string>
 	<key>IDESourceControlProjectVersion</key>
 	<integer>111</integer>
 	<key>IDESourceControlProjectWCCIdentifier</key>
@@ -49,7 +47,7 @@
 		</dict>
 		<dict>
 			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
-			<string>public.vcs.subversion</string>
+			<string>public.vcs.git</string>
 			<key>IDESourceControlWCCIdentifierKey</key>
 			<string>57ff6487-cd31-0410-9ec3-f628ee90f5f0++8259</string>
 			<key>IDESourceControlWCCName</key>
@@ -57,7 +55,7 @@
 		</dict>
 		<dict>
 			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
-			<string>public.vcs.git</string>
+			<string>public.vcs.subversion</string>
 			<key>IDESourceControlWCCIdentifierKey</key>
 			<string>57ff6487-cd31-0410-9ec3-f628ee90f5f0++8259</string>
 			<key>IDESourceControlWCCName</key>

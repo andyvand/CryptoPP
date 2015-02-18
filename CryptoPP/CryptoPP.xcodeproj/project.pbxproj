@@ -279,6 +279,9 @@
 		A95E0CD61A94D76D00B82691 /* zinflate.h in Headers */ = {isa = PBXBuildFile; fileRef = A95E0BC81A94D76D00B82691 /* zinflate.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		A95E0CD71A94D76D00B82691 /* zlib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A95E0BC91A94D76D00B82691 /* zlib.cpp */; };
 		A95E0CD81A94D76D00B82691 /* zlib.h in Headers */ = {isa = PBXBuildFile; fileRef = A95E0BCA1A94D76D00B82691 /* zlib.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		A9AB594E1A95029300D74495 /* CryptoPP_Dynamic.h in Headers */ = {isa = PBXBuildFile; fileRef = A9AB594D1A95029300D74495 /* CryptoPP_Dynamic.h */; };
+		A9AB59501A95029300D74495 /* CryptoPP_DynamicPriv.h in Headers */ = {isa = PBXBuildFile; fileRef = A9AB594F1A95029300D74495 /* CryptoPP_DynamicPriv.h */; };
+		A9AB59521A95029300D74495 /* CryptoPP_Dynamic.cp in Sources */ = {isa = PBXBuildFile; fileRef = A9AB59511A95029300D74495 /* CryptoPP_Dynamic.cp */; };
 		A9E9EF8D1A94E1C40097AED5 /* test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A95E0B4B1A94D76C00B82691 /* test.cpp */; };
 		A9E9EF8E1A94E1CA0097AED5 /* validat1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A95E0BB01A94D76D00B82691 /* validat1.cpp */; };
 		A9E9EF8F1A94E1CA0097AED5 /* validat2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A95E0BB11A94D76D00B82691 /* validat2.cpp */; };
@@ -710,12 +713,23 @@
 		A95E0BC81A94D76D00B82691 /* zinflate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zinflate.h; path = ../zinflate.h; sourceTree = "<group>"; };
 		A95E0BC91A94D76D00B82691 /* zlib.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = zlib.cpp; path = ../../zlib.cpp; sourceTree = "<group>"; };
 		A95E0BCA1A94D76D00B82691 /* zlib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zlib.h; path = ../zlib.h; sourceTree = "<group>"; };
+		A9AB594B1A95029200D74495 /* libCryptoPP Dynamic.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = "libCryptoPP Dynamic.dylib"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A9AB594D1A95029300D74495 /* CryptoPP_Dynamic.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CryptoPP_Dynamic.h; sourceTree = "<group>"; };
+		A9AB594F1A95029300D74495 /* CryptoPP_DynamicPriv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CryptoPP_DynamicPriv.h; sourceTree = "<group>"; };
+		A9AB59511A95029300D74495 /* CryptoPP_Dynamic.cp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = CryptoPP_Dynamic.cp; sourceTree = "<group>"; };
 		A9E9EF861A94E1A90097AED5 /* crypttest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = crypttest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A9E9EF991A94E3850097AED5 /* adhoc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = adhoc.cpp; path = "../../../../../cryptopp-code/c5/adhoc.cpp"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		A95E0A3E1A94D72F00B82691 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A9AB59481A95029200D74495 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -740,6 +754,7 @@
 				A95E0B841A94D76D00B82691 /* TestVectors */,
 				A95E0A4F1A94D75500B82691 /* Headers */,
 				A95E0A431A94D72F00B82691 /* Source */,
+				A9AB594C1A95029300D74495 /* CryptoPP Dynamic */,
 				A95E0A421A94D72F00B82691 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -749,6 +764,7 @@
 			children = (
 				A95E0A411A94D72F00B82691 /* libCryptoPP.a */,
 				A9E9EF861A94E1A90097AED5 /* crypttest */,
+				A9AB594B1A95029200D74495 /* libCryptoPP Dynamic.dylib */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1162,6 +1178,16 @@
 			path = ../TestVectors;
 			sourceTree = "<group>";
 		};
+		A9AB594C1A95029300D74495 /* CryptoPP Dynamic */ = {
+			isa = PBXGroup;
+			children = (
+				A9AB594D1A95029300D74495 /* CryptoPP_Dynamic.h */,
+				A9AB594F1A95029300D74495 /* CryptoPP_DynamicPriv.h */,
+				A9AB59511A95029300D74495 /* CryptoPP_Dynamic.cp */,
+			);
+			path = "CryptoPP Dynamic";
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -1307,6 +1333,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A9AB59491A95029200D74495 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A9AB59501A95029300D74495 /* CryptoPP_DynamicPriv.h in Headers */,
+				A9AB594E1A95029300D74495 /* CryptoPP_Dynamic.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
@@ -1326,6 +1361,23 @@
 			productName = CryptoPP;
 			productReference = A95E0A411A94D72F00B82691 /* libCryptoPP.a */;
 			productType = "com.apple.product-type.library.static";
+		};
+		A9AB594A1A95029200D74495 /* CryptoPP Dynamic */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A9AB59531A95029300D74495 /* Build configuration list for PBXNativeTarget "CryptoPP Dynamic" */;
+			buildPhases = (
+				A9AB59471A95029200D74495 /* Sources */,
+				A9AB59481A95029200D74495 /* Frameworks */,
+				A9AB59491A95029200D74495 /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "CryptoPP Dynamic";
+			productName = "CryptoPP Dynamic";
+			productReference = A9AB594B1A95029200D74495 /* libCryptoPP Dynamic.dylib */;
+			productType = "com.apple.product-type.library.dynamic";
 		};
 		A9E9EF851A94E1A90097AED5 /* crypttest */ = {
 			isa = PBXNativeTarget;
@@ -1358,6 +1410,9 @@
 					A95E0A401A94D72F00B82691 = {
 						CreatedOnToolsVersion = 6.1.1;
 					};
+					A9AB594A1A95029200D74495 = {
+						CreatedOnToolsVersion = 6.1.1;
+					};
 					A9E9EF851A94E1A90097AED5 = {
 						CreatedOnToolsVersion = 6.1.1;
 					};
@@ -1381,6 +1436,7 @@
 				A9E9EF9B1A94E3DE0097AED5 /* All */,
 				A95E0A401A94D72F00B82691 /* CryptoPP */,
 				A9E9EF851A94E1A90097AED5 /* crypttest */,
+				A9AB594A1A95029200D74495 /* CryptoPP Dynamic */,
 			);
 		};
 /* End PBXProject section */
@@ -1529,6 +1585,14 @@
 				A95E0C281A94D76D00B82691 /* gcm.cpp in Sources */,
 				A95E0C4E1A94D76D00B82691 /* md5.cpp in Sources */,
 				A95E0C421A94D76D00B82691 /* iterhash.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A9AB59471A95029200D74495 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A9AB59521A95029300D74495 /* CryptoPP_Dynamic.cp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1700,6 +1764,50 @@
 			};
 			name = Release;
 		};
+		A9AB59541A95029300D74495 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				EXECUTABLE_PREFIX = lib;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_CPP_EXCEPTIONS = YES;
+				GCC_ENABLE_CPP_RTTI = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"CRYPTOPP_ENABLE_COMPLIANCE_WITH_FIPS_140_2=1",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		A9AB59551A95029300D74495 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				EXECUTABLE_PREFIX = lib;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_CPP_EXCEPTIONS = YES;
+				GCC_ENABLE_CPP_RTTI = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = "CRYPTOPP_ENABLE_COMPLIANCE_WITH_FIPS_140_2=1";
+				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 		A9E9EF8B1A94E1AA0097AED5 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1766,6 +1874,14 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		A9AB59531A95029300D74495 /* Build configuration list for PBXNativeTarget "CryptoPP Dynamic" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A9AB59541A95029300D74495 /* Debug */,
+				A9AB59551A95029300D74495 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
 		A9E9EF8A1A94E1AA0097AED5 /* Build configuration list for PBXNativeTarget "crypttest" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -1773,6 +1889,7 @@
 				A9E9EF8C1A94E1AA0097AED5 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		A9E9EF9C1A94E3DE0097AED5 /* Build configuration list for PBXAggregateTarget "All" */ = {
 			isa = XCConfigurationList;
@@ -1781,6 +1898,7 @@
 				A9E9EF9E1A94E3DE0097AED5 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

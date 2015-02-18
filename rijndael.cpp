@@ -962,7 +962,11 @@ CRYPTOPP_NAKED void CRYPTOPP_FASTCALL Rijndael_Enc_AdvancedProcessBlocks(void *l
 	Rijndael_Enc_AdvancedProcessBlocks ENDP
 #endif
 #ifdef __GNUC__
+#ifndef __clang__
 	".att_syntax prefix;"
+#else
+    ".att_syntax;"
+#endif
 	: 
 	: "c" (locals), "d" (k), "S" (Te), "D" (g_cacheLineSize)
 	: "memory", "cc", "%eax"

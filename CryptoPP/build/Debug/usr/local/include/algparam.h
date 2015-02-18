@@ -301,8 +301,11 @@ protected:
 template <class T>
 class AlgorithmParametersTemplate : public AlgorithmParametersBase
 {
+protected:
+    T m_value;
+
 public:
-	AlgorithmParametersTemplate(const char *name, const T &value, bool throwIfNotUsed)
+    AlgorithmParametersTemplate(const char *name, const T &value, bool throwIfNotUsed)
 		: AlgorithmParametersBase(name, throwIfNotUsed), m_value(value)
 	{
 	}
@@ -319,11 +322,8 @@ public:
 
 	void MoveInto(void *buffer) const
 	{
-		AlgorithmParametersTemplate<T>* p = new(buffer) AlgorithmParametersTemplate<T>(*this);
+		AlgorithmParametersTemplate<T>* __unused p = new(buffer) AlgorithmParametersTemplate<T>(*this);
 	}
-
-protected:
-	T m_value;
 };
 
 CRYPTOPP_DLL_TEMPLATE_CLASS AlgorithmParametersTemplate<bool>;

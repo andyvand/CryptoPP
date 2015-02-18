@@ -12,6 +12,11 @@
 
 #include "serpentp.h"
 
+/* Fixme ... temporary clang fix */
+#ifdef __clang__
+#undef CRYPTOPP_BOOL_SSE2_ASM_AVAILABLE
+#endif
+
 NAMESPACE_BEGIN(CryptoPP)
 
 void SosemanukPolicy::CipherSetKey(const NameValuePairs &params, const byte *userKey, size_t keylen)
@@ -353,7 +358,7 @@ void SosemanukPolicy::OperateKeystream(KeystreamOperation operation, byte *outpu
 	#endif
 		__asm__ __volatile__
 		(
-		".intel_syntax noprefix;"
+		".intel_syntax;"
 		AS_PUSH_IF86(	bx)
 #else
 		word32 *state = m_state;
@@ -593,7 +598,7 @@ void SosemanukPolicy::OperateKeystream(KeystreamOperation operation, byte *outpu
 
 #ifdef __GNUC__
 		AS_POP_IF86(	bx)
-		".att_syntax prefix;"
+		".att_syntax;"
 			:
 			: "a" (m_state.m_ptr), "c" (iterationCount), "S" (s_sosemanukMulTables), "D" (output), "d" (input)
 	#if CRYPTOPP_BOOL_X64

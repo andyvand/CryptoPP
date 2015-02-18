@@ -19,6 +19,19 @@
 #endif
 extern "C" {_CRTIMP void __cdecl _CRT_DEBUGGER_HOOK(int);}
 #endif
+#else
+#include <dlfcn.h>
+#endif
+
+#if defined(__APPLE__)
+#include <mach-o/fat.h>
+#include <mach-o/loader.h>
+#include <Security/Security.h>
+#include <CoreFoundation/CoreFoundation.h>
+#include <stdint.h>
+#include <string.h>
+
+typedef void *Blob_t;
 #endif
 
 #include <iostream>
@@ -30,17 +43,19 @@ SecByteBlock g_actualMac;
 unsigned long g_macFileLocation = 0;
 
 // use a random dummy string here, to be searched/replaced later with the real MAC
-static const byte s_moduleMac[CryptoPP::HMAC<CryptoPP::SHA1>::DIGESTSIZE] = CRYPTOPP_DUMMY_DLL_MAC;
+const byte s_moduleMac[CryptoPP::HMAC<CryptoPP::SHA1>::DIGESTSIZE] = CRYPTOPP_DUMMY_DLL_MAC;
 CRYPTOPP_COMPILE_ASSERT(sizeof(s_moduleMac) == CryptoPP::SHA1::DIGESTSIZE);
 
 #ifdef CRYPTOPP_WIN32_AVAILABLE
 static HMODULE s_hModule = NULL;
+#else
+static void *s_hModule = NULL;
 #endif
 
 const byte * CRYPTOPP_API GetActualMacAndLocation(unsigned int &macSize, unsigned int &fileLocation)
 {
 	macSize = (unsigned int)g_actualMac.size();
-	fileLocation = g_macFileLocation;
+	fileLocation = (unsigned int)g_macFileLocation;
 	return g_actualMac;
 }
 
@@ -259,6 +274,9 @@ bool IntegrityCheckModule(const char *moduleFilename, const byte *expectedModule
 	MeterFilter verifier(new HashFilter(*mac, new ArraySink(actualMac, actualMac.size())));
 //	MeterFilter verifier(new FileSink("c:\\dt.tmp"));
 	std::ifstream moduleStream;
+#ifndef CRYPTOPP_WIN32_AVAILABLE
+    void *h;
+#endif
 
 #ifdef CRYPTOPP_WIN32_AVAILABLE
 	HMODULE h;
@@ -280,8 +298,8 @@ bool IntegrityCheckModule(const char *moduleFilename, const byte *expectedModule
 			moduleFilename = moduleFilenameBuf;
 		}
 	}
-#endif
-	if (moduleFilename != NULL)
+
+    if (moduleFilename != NULL)
 	{
 			moduleStream.open(moduleFilename, std::ios::in | std::ios::binary);
 #ifdef CRYPTOPP_WIN32_AVAILABLE
@@ -289,12 +307,32 @@ bool IntegrityCheckModule(const char *moduleFilename, const byte *expectedModule
 			moduleFilename = NULL;
 	}
 #endif
+#else /* Mac OS X / Unix / Linux / BSD */
+    Dl_info info;
+    {
+    char moduleFilenameBuf[PATH_MAX] = "";
+    if (dladdr((void *)IntegrityCheckModule, &info))
+    {
+        strncpy(moduleFilenameBuf, info.dli_fname, PATH_MAX);
+    }
+
+    if (moduleFilename != NULL)
+    {
+        moduleStream.open(moduleFilename, std::ios::in | std::ios::binary);
+        h = dlopen(moduleFilenameBuf, (RTLD_NOW | RTLD_LOCAL));
+        memset((void *)moduleFilename, 0, PATH_MAX);
+    }
+#endif
 	}
 
 	if (!moduleStream)
 	{
 #ifdef CRYPTOPP_WIN32_AVAILABLE
 		OutputDebugString("Crypto++ DLL integrity check failed. Cannot open file for reading.");
+#elif defined(__APPLE__)
+        printf("Crypto++ dylib integrity check failed. Cannot open file for reading.");
+#else
+        printf("Crypto++ so integrity check failed. Cannot open file for reading.");
 #endif
 		return false;
 	}
@@ -380,35 +418,92 @@ bool IntegrityCheckModule(const char *moduleFilename, const byte *expectedModule
 		}
 		phs++;
 	}
+#else
+    // try to hash from memory first
+    struct mach_header *mh_32 = (struct mach_header *)h;
+    struct load_command *tmplc = (struct load_command *)((unsigned char *)h + sizeof(struct mach_header));
+    uint32_t curlc = 0;
+    uint32_t totlc = mh_32->ncmds;
+    uint32_t curoff = sizeof(struct mach_header);
+    struct linkedit_data_command *cryptsiglc = (struct linkedit_data_command *)0;
+    struct linkedit_data_command *cryptsigdrs = (struct linkedit_data_command *)0;
+    Blob_t cryptsigdata = (Blob_t)0;
+    uint8_t *cryptdrsdata = (uint8_t *)0;
+    uint32_t cryptsigdatasize = 0;
+    uint32_t zeroeddata = 0;
+
+    /* Get code signature load command + divide */
+    while (curlc < totlc)
+    {
+        if (tmplc->cmd == LC_CODE_SIGNATURE)
+        {
+            cryptsiglc = (struct linkedit_data_command *)((unsigned char *)h + curoff);
+        }
+        
+        if (tmplc->cmd == LC_DYLIB_CODE_SIGN_DRS)
+        {
+            cryptsigdrs = (struct linkedit_data_command *)((unsigned char *)h + curoff);
+        }
+        
+        curoff += tmplc->cmdsize;
+        tmplc = (struct load_command *)((unsigned char *)h + curoff);
+        ++curlc;
+    }
+
+    /* Skip code signature */
+    if (cryptsiglc)
+    {
+        cryptsigdata = (Blob_t)((unsigned char *)h + cryptsiglc->dataoff);
+
+        verifier.AddRangeToSkip(0, cryptsiglc->dataoff, cryptsiglc->datasize);
+    }
 #endif
+
 	file.TransferAllTo(verifier);
 
-#ifdef CRYPTOPP_WIN32_AVAILABLE
 	// if that fails (could be caused by debug breakpoints or DLL base relocation modifying image in memory),
 	// hash from disk instead
 	if (!VerifyBufsEqual(expectedModuleMac, actualMac, macSize))
 	{
+#if defined(__APPLE__)
+        printf("In memory integrity check failed. This may be caused by debug breakpoints or dylib relocation.\n");
+#elif defined(CRYPTOPP_WIN32_AVAILABLE)
 		OutputDebugString("In memory integrity check failed. This may be caused by debug breakpoints or DLL relocation.\n");
+#else
+        printf("In memory integrity check failed. This may be caused by debug breakpoints or so relocation.\n");
+#endif
+
 		moduleStream.clear();
 		moduleStream.seekg(0);
+
 		verifier.Initialize(MakeParameters(Name::OutputBuffer(), ByteArrayParameter(actualMac, (unsigned int)actualMac.size())));
 //		verifier.Initialize(MakeParameters(Name::OutputFileName(), (const char *)"c:\\dt2.tmp"));
+
+#ifdef CRYPTOPP_WIN32_AVAILABLE
 		verifier.AddRangeToSkip(0, checksumPos, checksumSize);
 		verifier.AddRangeToSkip(0, certificateTableDirectoryPos, certificateTableDirectorySize);
 		verifier.AddRangeToSkip(0, certificateTablePos, certificateTableSize);
+#endif
+
 		verifier.AddRangeToSkip(0, macFileLocation, macSize);
+
 		FileStore(moduleStream).TransferAllTo(verifier);
 	}
-#endif
 
 	if (VerifyBufsEqual(expectedModuleMac, actualMac, macSize))
 		return true;
 
-#ifdef CRYPTOPP_WIN32_AVAILABLE
 	std::string hexMac;
 	HexEncoder(new StringSink(hexMac)).PutMessageEnd(actualMac, actualMac.size());
+
+#if defined(__APPLE__)
+    printf((("Crypto++ dylib integrity check failed. Actual MAC is: " + hexMac) + "\n").c_str());
+#elif defined(CRYPTOPP_WIN32_AVAILABLE)
 	OutputDebugString((("Crypto++ DLL integrity check failed. Actual MAC is: " + hexMac) + "\n").c_str());
+#else
+    printf((("Crypto++ so integrity check failed. Actual MAC is: " + hexMac) + "\n").c_str());
 #endif
+
 	return false;
 }
 
@@ -563,7 +658,7 @@ done:
 	return;
 }
 
-#ifdef CRYPTOPP_WIN32_AVAILABLE
+#if defined(CRYPTOPP_WIN32_AVAILABLE) || defined(__APPLE__)
 
 void DoDllPowerUpSelfTest()
 {
@@ -574,7 +669,7 @@ void DoDllPowerUpSelfTest()
 
 void DoDllPowerUpSelfTest()
 {
-	throw NotImplemented("DoDllPowerUpSelfTest() only available on Windows");
+	throw NotImplemented("DoDllPowerUpSelfTest() only available on Windows/Mac OS X");
 }
 
 #endif	// #ifdef CRYPTOPP_WIN32_AVAILABLE
@@ -594,6 +689,21 @@ BOOL APIENTRY DllMain(HANDLE hModule,
 		CryptoPP::DoDllPowerUpSelfTest();
 	}
     return TRUE;
+}
+
+#else
+
+static bool PowerUpTestDone = false;
+
+// DllMain needs to be in the global namespace (bound on load of library)
+int LibMain(int argc, char **argv)
+{
+    if (PowerUpTestDone == false)
+    {
+        CryptoPP::DoDllPowerUpSelfTest();
+    }
+
+    return 0;
 }
 
 #endif	// #ifdef CRYPTOPP_WIN32_AVAILABLE

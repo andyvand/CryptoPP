@@ -38,7 +38,6 @@
 #include "trdlocal.h"
 
 #ifdef CRYPTOPP_IMPORTS
-
 #ifdef _DLL
 // cause CRT DLL to be initialized before Crypto++ so that we can use malloc and free during DllMain()
 #ifdef NDEBUG

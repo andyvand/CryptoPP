@@ -29,20 +29,56 @@ bool CpuId(word32 input, word32 *output)
 	return true;
 }
 
+#elif defined(__APPLE__) && defined(__clang__)
+
+#if defined( __x86_64__ )
+#define __cpuid(CPUInfo, InfoType) __asm__ __volatile__("pushq %%rbx;\n\t" \
+    "xorq %%rax, %%rax;\n\t" \
+    "movl %%esi, %%eax;\n\t" \
+    "cpuid;\n\t" \
+    "movl %%eax, 0x0(%%rdi);\n\t" \
+    "movl %%ebx, 0x4(%%rdi);\n\t" \
+    "movl %%ecx, 0x8(%%rdi);\n\t" \
+    "movl %%edx, 0xc(%%rdi);\n\t" \
+    "popq %%rbx;\n\t" \
+    : : "D" (CPUInfo), "S" (InfoType) \
+    : "%rax", "%rcx", "%rdx")
+#elif defined( __i386__ )
+#define __cpuid(CPUInfo, InfoType) __asm__ __volatile__("pushl %%ebx;\n\t" \
+    "xorl %%eax, %%eax;\n\t" \
+    "movl %%esi, %%eax;\n\t" \
+    "cpuid;\n\t" \
+    "movl %%eax, 0x0(%%edi);\n\t" \
+    "movl %%ebx, 0x4(%%edi);\n\t" \
+    "movl %%ecx, 0x8(%%edi);\n\t \
+    "movl %%edx, 0xc(%%edi);\n\t" \
+    "popl %%ebx\n\t;" \
+    : : "D" (CPUInfo), "S" (InfoType) \
+    : "%eax", "%ecx", "%edx" )
 #else
+#error "PowerPC does not have cpuid"
+#endif /* i386/x86_64 */
+
+bool CpuId(word32 input, word32 *output)
+{
+    __cpuid((int *)output, input);
+    return true;
+}
+
+#else /* No cpuid available */
 
 #ifndef CRYPTOPP_MS_STYLE_INLINE_ASSEMBLY
 extern "C" {
 typedef void (*SigHandler)(int);
 
-static jmp_buf s_jmpNoCPUID;
-static void SigIllHandlerCPUID(int)
+jmp_buf s_jmpNoCPUID;
+inline void SigIllHandlerCPUID(int)
 {
 	longjmp(s_jmpNoCPUID, 1);
 }
 
-static jmp_buf s_jmpNoSSE2;
-static void SigIllHandlerSSE2(int)
+jmp_buf s_jmpNoSSE2;
+inline void SigIllHandlerSSE2(int)
 {
 	longjmp(s_jmpNoSSE2, 1);
 }

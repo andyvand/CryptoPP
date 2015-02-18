@@ -445,9 +445,9 @@ inline word DWord::operator%(word a)
 		int result;	\
 		__asm__ __volatile__ \
 		( \
-			".intel_syntax noprefix;"
+			".intel_syntax;"
 	#define AddEpilogue \
-			".att_syntax prefix;" \
+			".att_syntax;" \
 					: "=a" (result)\
 					: "d" (C), "a" (A), "D" (B), "c" (N) \
 					: "%esi", "memory", "cc" \
@@ -456,12 +456,12 @@ inline word DWord::operator%(word a)
 	#define MulPrologue \
 		__asm__ __volatile__ \
 		( \
-			".intel_syntax noprefix;" \
+			".intel_syntax;" \
 			AS1(	push	ebx) \
 			AS2(	mov		ebx, edx)
 	#define MulEpilogue \
 			AS1(	pop		ebx) \
-			".att_syntax prefix;" \
+			".att_syntax;" \
 			: \
 			: "d" (s_maskLow16), "c" (C), "a" (A), "D" (B) \
 			: "%esi", "memory", "cc" \
@@ -469,7 +469,7 @@ inline word DWord::operator%(word a)
 	#define SquPrologue		MulPrologue
 	#define SquEpilogue	\
 			AS1(	pop		ebx) \
-			".att_syntax prefix;" \
+			".att_syntax;" \
 			: \
 			: "d" (s_maskLow16), "c" (C), "a" (A) \
 			: "%esi", "%edi", "memory", "cc" \
@@ -477,7 +477,7 @@ inline word DWord::operator%(word a)
 	#define TopPrologue		MulPrologue
 	#define TopEpilogue	\
 			AS1(	pop		ebx) \
-			".att_syntax prefix;" \
+			".att_syntax;" \
 			: \
 			: "d" (s_maskLow16), "c" (C), "a" (A), "D" (B), "S" (L) \
 			: "memory", "cc" \
@@ -527,13 +527,71 @@ extern "C" {
 int Baseline_Add(size_t N, word *C, const word *A, const word *B);
 int Baseline_Sub(size_t N, word *C, const word *A, const word *B);
 }
-#elif defined(CRYPTOPP_X64_ASM_AVAILABLE) && defined(__GNUC__) && defined(CRYPTOPP_WORD128_AVAILABLE)
+#elif defined(CRYPTOPP_X64_ASM_AVAILABLE) && defined(__clang__) && defined(__APPLE__)
+int Baseline_Add(size_t N, word *C, const word *A, const word *B)
+{
+    word result;
+
+    __asm("neg %1\n\t"
+          "jz 1f\n\t"
+          "mov (%3,%1,8), %0\n\t"
+          "add (%4,%1,8), %0\n\t"
+          "mov %0, (%2,%1,8)\n\t"
+          ASL(0)
+          "mov 8(%3,%1,8), %0\n\t"
+          "mov 8(%4,%1,8), %0\n\t"
+          "mov %0, 8(%2,%1,8)\n\t"
+          "lea 2(%1), %1\n\t"
+          "jrcxz 1f\n\t"
+          "mov (%3,%1,8), %0\n\t"
+          "adc (%4,%1,8), %0\n\t"
+          "jmp 0b\n\t"
+          ASL(1)
+          "mov 0, %0\n\t"
+          "adc %0, %0\n\t"
+          : "=&r" (result), "+r" (N)
+          : "r" (C+N), "r" (A+N), "r" (B+N)
+          : "memory", "cc");
+
+    return result;
+}
+
+int Baseline_Sub(size_t N, word *C, const word *A, const word *B)
+{
+    word result;
+
+    __asm__("neg %1\n\t"
+            "jz 1f\n\t"
+            "mov (%3,%1,8), %0\n\t"
+            "sub (%4,%1,8), %0\n\t"
+            "mov (%3,%1,8), %0\n\t"
+            ASL(0)
+            "mov 8(%3,%1,8), %0\n\t"
+            "sbb 8(%4,%1,8), %0\n\t"
+            "mov 8(%2,%1,8), %0\n\t"
+            "lea 2(%1), %1\n\t"
+            "jrcxz 1f\n\t"
+            "mov (%3,%1,8), %0\n\t"
+            "sbb (%4,%1,8), %0\n\t"
+            "mov (%2,%1,8), %0\n\t"
+            "jmp 0b\n\t"
+            ASL(1)
+            "mov 0, %0\n\t"
+            "adc %0, %0\n\t"
+            : "=&r" (result), "+r" (N)
+            : "r" (C+N), "r" (A+N), "r" (B+N)
+            : "memory", "cc");
+
+    return (int)result;
+}
+#else
+#if defined(CRYPTOPP_X64_ASM_AVAILABLE) && defined(__GNUC__) && defined(CRYPTOPP_WORD128_AVAILABLE)
 int Baseline_Add(size_t N, word *C, const word *A, const word *B)
 {
 	word result;
 	__asm__ __volatile__
 	(
-	".intel_syntax;"
+	".intel_syntax;\n"
 	AS1(	neg		%1)
 	ASJ(	jz,		1, f)
 	AS2(	mov		%0,[%3+8*%1])
@@ -552,7 +610,7 @@ int Baseline_Add(size_t N, word *C, const word *A, const word *B)
 	ASL(1)
 	AS2(	mov		%0, 0)
 	AS2(	adc		%0, %0)
-	".att_syntax;"
+	".att_syntax;\n"
 	: "=&r" (result), "+c" (N)
 	: "r" (C+N), "r" (A+N), "r" (B+N)
 	: "memory", "cc"
@@ -820,6 +878,7 @@ int CRYPTOPP_FASTCALL Baseline_Sub(size_t N, word *C, const word *A, const word 
 	}
 	return int(GetBorrow(u));
 }
+#endif
 #endif
 
 static word LinearMultiply(word *C, const word *A, word B, size_t N)

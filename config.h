@@ -4,14 +4,14 @@
 // ***************** Important Settings ********************
 
 // define this if running on a big-endian CPU
-#if !defined(IS_LITTLE_ENDIAN) && (defined(__BIG_ENDIAN__) || defined(__sparc) || defined(__sparc__) || defined(__hppa__) || defined(__MIPSEB__) || defined(__ARMEB__) || (defined(__MWERKS__) && !defined(__INTEL__)))
-#	define IS_BIG_ENDIAN
+#if !defined(IS_LITTLE_ENDIAN) && (defined(__BIG_ENDIAN__) || defined(__sparc) || defined(__sparc__) || defined(__hppa__) || defined(__MIPSEB__) || defined(__ppc__) || defined(__ppc64__) || defined(__ARMEB__) || (defined(__MWERKS__) && !defined(__INTEL__)))
+#	define IS_BIG_ENDIAN 1
 #endif
 
 // define this if running on a little-endian CPU
 // big endian will be assumed if IS_LITTLE_ENDIAN is not defined
 #ifndef IS_BIG_ENDIAN
-#	define IS_LITTLE_ENDIAN
+#	define IS_LITTLE_ENDIAN 1
 #endif
 
 // define this if you want to disable all OS-dependent features,
@@ -21,13 +21,12 @@
 // Define this to use features provided by Microsoft's CryptoAPI.
 // Currently the only feature used is random number generation.
 // This macro will be ignored if NO_OS_DEPENDENCE is defined.
-#define USE_MS_CRYPTOAPI
+#define USE_MS_CRYPTOAPI 1
 
 // ***************** Less Important Settings ***************
 
 // define this to retain (as much as possible) old deprecated function and class names
 // #define CRYPTOPP_MAINTAIN_BACKWARDS_COMPATIBILITY
-
 #define GZIP_OS_CODE 0
 
 // Try this if your CPU has 256K internal cache or a slow multiply instruction
@@ -255,7 +254,7 @@ NAMESPACE_END
 	// C++Builder 2010 does not allow "call label" where label is defined within inline assembly
 	#define CRYPTOPP_X86_ASM_AVAILABLE
 
-	#if !defined(CRYPTOPP_DISABLE_SSE2) && (defined(CRYPTOPP_MSVC6PP_OR_LATER) || CRYPTOPP_GCC_VERSION >= 30300)
+	#if (!defined(CRYPTOPP_DISABLE_SSE2) && (defined(CRYPTOPP_MSVC6PP_OR_LATER) || (CRYPTOPP_GCC_VERSION >= 30300)) || defined(__clang__))
 		#define CRYPTOPP_BOOL_SSE2_ASM_AVAILABLE 1
 	#else
 		#define CRYPTOPP_BOOL_SSE2_ASM_AVAILABLE 0
@@ -263,7 +262,7 @@ NAMESPACE_END
 
 	// SSSE3 was actually introduced in GNU as 2.17, which was released 6/23/2006, but we can't tell what version of binutils is installed.
 	// GCC 4.1.2 was released on 2/13/2007, so we'll use that as a proxy for the binutils version.
-	#if !defined(CRYPTOPP_DISABLE_SSSE3) && (_MSC_VER >= 1400 || CRYPTOPP_GCC_VERSION >= 40102)
+	#if !defined(CRYPTOPP_DISABLE_SSSE3) && (_MSC_VER >= 1400 || (CRYPTOPP_GCC_VERSION >= 40102) || defined(__clang__))
 		#define CRYPTOPP_BOOL_SSSE3_ASM_AVAILABLE 1
 	#else
 		#define CRYPTOPP_BOOL_SSSE3_ASM_AVAILABLE 0
@@ -271,11 +270,11 @@ NAMESPACE_END
 #endif
 
 #if !defined(CRYPTOPP_DISABLE_ASM) && defined(_MSC_VER) && defined(_M_X64)
-	#define CRYPTOPP_X64_MASM_AVAILABLE
+	#define CRYPTOPP_X64_MASM_AVAILABLE 1
 #endif
 
-#if !defined(CRYPTOPP_DISABLE_ASM) && defined(__GNUC__) && defined(__x86_64__)
-	#define CRYPTOPP_X64_ASM_AVAILABLE
+#if !defined(CRYPTOPP_DISABLE_ASM) && (defined(__GNUC__) || defined(__clang__)) && defined(__x86_64__)
+	#define CRYPTOPP_X64_ASM_AVAILABLE 1
 #endif
 
 #if !defined(CRYPTOPP_DISABLE_SSE2) && (defined(CRYPTOPP_MSVC6PP_OR_LATER) || defined(__SSE2__))
@@ -284,7 +283,7 @@ NAMESPACE_END
 	#define CRYPTOPP_BOOL_SSE2_INTRINSICS_AVAILABLE 0
 #endif
 
-#if !defined(CRYPTOPP_DISABLE_SSSE3) && !defined(CRYPTOPP_DISABLE_AESNI) && CRYPTOPP_BOOL_SSE2_INTRINSICS_AVAILABLE && (CRYPTOPP_GCC_VERSION >= 40400 || _MSC_FULL_VER >= 150030729 || __INTEL_COMPILER >= 1110)
+#if !defined(CRYPTOPP_DISABLE_SSSE3) && !defined(CRYPTOPP_DISABLE_AESNI) && CRYPTOPP_BOOL_SSE2_INTRINSICS_AVAILABLE && (CRYPTOPP_GCC_VERSION >= 40400 || _MSC_FULL_VER >= 150030729 || __INTEL_COMPILER >= 1110) || defined(__clang__)
 	#define CRYPTOPP_BOOL_AESNI_INTRINSICS_AVAILABLE 1
 #else
 	#define CRYPTOPP_BOOL_AESNI_INTRINSICS_AVAILABLE 0
@@ -299,7 +298,7 @@ NAMESPACE_END
 // how to allocate 16-byte aligned memory (for SSE2)
 #if defined(CRYPTOPP_MSVC6PP_OR_LATER)
 	#define CRYPTOPP_MM_MALLOC_AVAILABLE
-#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 	#define CRYPTOPP_MALLOC_ALIGNMENT_IS_16
 #elif defined(__linux__) || defined(__sun__) || defined(__CYGWIN__)
 	#define CRYPTOPP_MEMALIGN_AVAILABLE
@@ -311,7 +310,7 @@ NAMESPACE_END
 #if defined(_MSC_VER) && _MSC_VER >= 1300
 #	define CRYPTOPP_NOINLINE_DOTDOTDOT
 #	define CRYPTOPP_NOINLINE __declspec(noinline)
-#elif defined(__GNUC__)
+#elif defined(__GNUC__) || defined(__clang__)
 #	define CRYPTOPP_NOINLINE_DOTDOTDOT
 #	define CRYPTOPP_NOINLINE __attribute__((noinline))
 #else
@@ -353,7 +352,7 @@ NAMESPACE_END
 #define CRYPTOPP_WIN32_AVAILABLE
 #endif
 
-#if defined(__unix__) || defined(__MACH__) || defined(__NetBSD__) || defined(__sun)
+#if defined(__unix__) || defined(__MACH__) || defined(__NetBSD__) || defined(__sun) || defined(__APPLE__)
 #define CRYPTOPP_UNIX_AVAILABLE
 #endif
 
@@ -453,5 +452,4 @@ NAMESPACE_END
 #else
 #define CRYPTOPP_STATIC_TEMPLATE_CLASS CRYPTOPP_EXTERN_STATIC_TEMPLATE_CLASS
 #endif
-
 #endif
